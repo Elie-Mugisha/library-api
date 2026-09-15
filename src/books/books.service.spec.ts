@@ -13,7 +13,8 @@ describe('BooksService', () => {
     const mockRepository: Partial<jest.Mocked<IBooksRepository>> = {
       findByIsbn: jest.fn(),
       create: jest.fn(),
-      findById: jest.fn()
+      findById: jest.fn(),
+      update: jest.fn()
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -89,6 +90,45 @@ describe('BooksService', () => {
 
       expect(repository.findById).toHaveBeenCalledWith(bookId);
       expect(result).toEqual(expectedBook);
+    })
+  })
+
+  describe('checkouttBook', () => {
+    const bookId = 'target-book-id';
+
+    it('should throw ConflictException if book is already checked out', async () => {
+      const unavailableBook = new Book({
+        id: bookId,
+        title: 'Clean Code',
+        author: 'Robert C. Martin',
+        isbn: '978-0132350884',
+        isAvailable: false,
+      });
+      repository.findById.mockResolvedValue(unavailableBook);
+
+      await expect(service.checkoutBook(bookId)).rejects.toThrow(ConflictException)
+      expect(repository.findById).toHaveBeenCalledWith(bookId);
+      expect(repository.update).not.toHaveBeenCalled();
+    });
+
+    it('should update availability to false and return updated book when available', async () => {
+      const availableBook = new Book({
+        id: bookId,
+        title: 'Clean Code',
+        author: 'Robert C. Martin',
+        isbn: '978-0132350884',
+        isAvailable: true,
+      })
+      const updatedBook = new Book({ ...availableBook, isAvailable: false });
+
+      repository.findById.mockResolvedValue(availableBook);
+      repository.update.mockResolvedValue(updatedBook);
+
+      const result = await service.checkoutBook(bookId);
+
+      expect(repository.findById).toHaveBeenCalledWith(bookId);
+      expect(repository.update).toHaveBeenCalledWith(bookId, { isAvailable: false });
+      expect(result.isAvailable).toBe(false);
     })
   })
   

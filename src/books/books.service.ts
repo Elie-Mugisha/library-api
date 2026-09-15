@@ -34,4 +34,15 @@ export class BooksService {
     }
     return book;
   }
+
+  async checkoutBook(id: string): Promise<Book> {
+    const book = await this.findById(id)
+
+    if (!book.isAvailable) {
+      throw new ConflictException(`Book with ID "${id}" is already checked out`);
+    }
+
+    const updated = await this.booksRepository.update(id, { isAvailable: false });
+    return updated!;
+  }
 }
