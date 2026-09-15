@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing'
-import { ConflictException } from '@nestjs/common'
+import { ConflictException, NotFoundException } from '@nestjs/common'
 import { BooksService } from './books.service'
 import { BOOKS_REPOSITORY_TOKEN, IBooksRepository } from './interfaces/books-repository.interface'
 import { Book } from './entities/book.entity'
@@ -12,7 +12,8 @@ describe('BooksService', () => {
   beforeEach(async () => {
     const mockRepository: Partial<jest.Mocked<IBooksRepository>> = {
       findByIsbn: jest.fn(),
-      create: jest.fn()
+      create: jest.fn(),
+      findById: jest.fn()
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -63,4 +64,32 @@ describe('BooksService', () => {
       expect(result.id).toBeDefined();
     })
   })
+
+  describe('findById', () => {
+    const bookId = 'target-book-id';
+
+    it('should throw NotFoundException when repository returns null', async () => {
+      repository.findById.mockResolvedValue(null);
+
+      await expect(service.findById(bookId)).rejects.toThrow(NotFoundException);
+      expect(repository.findById).toHaveBeenCalledWith(bookId);
+    });
+
+    it('should return the found book when repository finds it', async () => {
+      const expectedBook = new Book({
+        id: bookId,
+        title: 'Refactoring',
+        author: 'Martin Fowler',
+        isbn: '978-0201485677',
+        isAvailable: true
+      });
+      repository.findById.mockResolvedValue(expectedBook);
+
+      const result = await service.findById(bookId);
+
+      expect(repository.findById).toHaveBeenCalledWith(bookId);
+      expect(result).toEqual(expectedBook);
+    })
+  })
+  
 })
