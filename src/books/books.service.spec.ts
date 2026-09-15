@@ -93,7 +93,7 @@ describe('BooksService', () => {
     })
   })
 
-  describe('checkouttBook', () => {
+  describe('checkoutBook', () => {
     const bookId = 'target-book-id';
 
     it('should throw ConflictException if book is already checked out', async () => {
@@ -130,6 +130,48 @@ describe('BooksService', () => {
       expect(repository.update).toHaveBeenCalledWith(bookId, { isAvailable: false });
       expect(result.isAvailable).toBe(false);
     })
+  })
+
+  describe('returnBook', () => {
+    const bookId = 'target-book'
+
+    it('should find the book and update availability if the book is returned', async () => {
+      const borrowedBook = new Book({
+        id: bookId,
+        title: 'Clean Code',
+        author: 'Robert C. Martin',
+        isbn: '978-0132350884',
+        isAvailable: false,
+      })
+
+      const updatedBook = { ...borrowedBook, isAvailable: true };
+
+      repository.findById.mockResolvedValue(borrowedBook);
+      repository.update.mockResolvedValue(updatedBook);
+
+      await expect(service.returnBook(bookId)).resolves.toBe(updatedBook);
+      expect(repository.findById).toHaveBeenCalledWith(bookId);
+      expect(repository.update).toHaveBeenCalled()
+      
+      
+    })
+    
+    it('should throw a ConflictException if the book being returned is already available', async () => {
+      const availableBook = new Book({
+        id: bookId,
+        title: 'Clean Code',
+        author: 'Robert C. Martin',
+        isbn: '978-0132350884',
+        isAvailable: true,
+      })
+
+      repository.findById.mockResolvedValue(availableBook)
+
+      await expect(service.returnBook(bookId)).rejects.toThrow(ConflictException)
+      expect(repository.findById).toHaveBeenCalledWith(bookId);
+      expect(repository.update).not.toHaveBeenCalled();
+    })
+
   })
   
 })

@@ -45,4 +45,15 @@ export class BooksService {
     const updated = await this.booksRepository.update(id, { isAvailable: false });
     return updated!;
   }
+
+  async returnBook(id: string): Promise<Book> {
+    const book = await this.findById(id)
+
+    if (book.isAvailable) {
+      throw new ConflictException(`Book with ID "${id}" is not checked out`);
+    }
+
+    const updated = await this.booksRepository.update(id, { isAvailable: true });
+    return updated;
+  }
 }
