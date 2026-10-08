@@ -14,7 +14,8 @@ describe('BooksService', () => {
       findByIsbn: jest.fn(),
       create: jest.fn(),
       findById: jest.fn(),
-      update: jest.fn()
+      update: jest.fn(),
+      findAll: jest.fn()
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -172,6 +173,49 @@ describe('BooksService', () => {
       expect(repository.update).not.toHaveBeenCalled();
     })
 
+  })
+
+  describe('findByIsbn', () => {
+    const isbn = '978-0132350884'
+    
+    it('should find a book by its isbn', async () => {
+      const existingBook = new Book({
+        id: 'target-book',
+        title: 'Clean Code',
+        author: 'Robert C. Martin',
+        isbn,
+        isAvailable: true,
+      })
+      repository.findByIsbn.mockResolvedValue(existingBook);
+
+      const result = await service.findByIsbn(isbn);
+      expect(result).toEqual(existingBook);
+      expect(repository.findByIsbn).toHaveBeenCalledWith(isbn);
+    })
+
+    it('should throw NotFoundException if the book with the isbn is not found', async () => {
+      repository.findByIsbn.mockResolvedValue(null);
+      await expect(service.findByIsbn(isbn)).rejects.toThrow(NotFoundException);
+    })
+  })
+
+  describe('findAll', () => {
+    it('should return an array of Boks', async () => {
+      const books: Book[] = [
+        {
+          id: 'target-book',
+          title: 'Clean Code',
+          author: 'Robert C. Martin',
+          isbn: '978-0132350884',
+          isAvailable: true,
+        }
+      ];
+      
+      repository.findAll.mockResolvedValue(books)
+      const result = await service.findAll();
+      expect(result).toEqual(books)
+      expect(repository.findAll).toHaveBeenCalledTimes(1)
+    })
   })
   
 })
