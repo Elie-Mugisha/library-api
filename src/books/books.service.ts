@@ -2,6 +2,7 @@ import { Injectable, Inject, ConflictException, NotFoundException } from "@nestj
 import { BOOKS_REPOSITORY_TOKEN, IBooksRepository } from "./interfaces/books-repository.interface";
 import { CreateBookDto } from "./dto/create-book.dto";
 import { Book } from "./entities/book.entity";
+import { UpdateBookDto } from "./dto/update-book.dto";
 
 @Injectable()
 export class BooksService {
@@ -35,6 +36,7 @@ export class BooksService {
     return book;
   }
 
+
   async checkoutBook(id: string): Promise<Book> {
     const book = await this.findById(id)
 
@@ -55,5 +57,28 @@ export class BooksService {
 
     const updated = await this.booksRepository.update(id, { isAvailable: true });
     return updated;
+  }
+
+  async findByIsbn(isbn: string): Promise<Book> {
+    const book = await this.booksRepository.findByIsbn(isbn);
+    if (!book) {
+      throw new NotFoundException(`Book with ISBN "${isbn}" not found`);
+    }
+    return book;
+  }
+
+  async findAll(): Promise<Book[]>{
+    return await this.booksRepository.findAll();
+  }
+
+  async update(id: string, updates: UpdateBookDto): Promise<Book> {
+    const book = await this.findById(id);
+    const updatedBook = { ...book, updates };
+    return updatedBook
+  }
+  
+  async deleteBook(id: string): Promise<boolean> {
+    await this.findById(id);
+    return await this.booksRepository.delete(id)
   }
 }
