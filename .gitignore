@@ -15,6 +15,5 @@ coverage/
 *.log
 npm-debug.log*
 .DS_Store
-branch_structure.json
 
 .env*
